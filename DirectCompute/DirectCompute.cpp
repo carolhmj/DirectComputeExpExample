@@ -16,8 +16,8 @@
 #pragma comment(lib, "D3DCompiler.lib")
 
 struct OutputType {
-	float directExp;
-	float indirectExp;
+	float exp;
+	float exp2;
 };
 
 union FloatCmp {
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 	}
 	std::cout << "min and max are set to: " << min << " " << max << "\n";
 
-	std::cout << "Trying to create device...\n";
+	//std::cout << "Trying to create device...\n";
 	
 	hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, featureLevels, 1, D3D11_SDK_VERSION, &device, nullptr, &deviceContext);
 	if (FAILED(hr)) {
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-    std::cout << "Creating compute shader...\n";
+    //std::cout << "Creating compute shader...\n";
 
 	static const D3D_SHADER_MACRO defines[] = { "USE_STRUCTURED_BUFFERS" };
 	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
@@ -104,20 +104,22 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	std::cout << "Creating buffers and filling them with input and expected output data...\n";
+	//std::cout << "Creating buffers and filling them with input and expected output data...\n";
 
-	float data[100], exp_data[100];
+	float data[100]; 
+	OutputType expData[100];
 	size_t dataAmount = sizeof(data) / sizeof(float);
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<> dis(min, max);
 	for (int i = 0; i < 100; i++) {
-		data[i] = dis(gen);
-		exp_data[i] = std::exp(data[i]);
+		data[i] = i;
+		expData[i].exp = std::exp(data[i]);
+		expData[i].exp2 = std::exp2(data[i]);
 	}
 
-	std::cout << "Creating buffers for the input and output values...\n";
+	//std::cout << "Creating buffers for the input and output values...\n";
 
 	hr = CreateBuffer(device, sizeof(float), dataAmount, data, &inBuffer);
 	if (FAILED(hr)) {
@@ -130,7 +132,7 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	
-	std::cout << "Creating buffer views...\n";
+	//std::cout << "Creating buffer views...\n";
 	hr = CreateShaderResourceView(device, inBuffer, &inSRV);
 	if (FAILED(hr)) {
 		std::cout << "Failed to create shader resource view. Error code was: " << std::hex << hr << "\n";
@@ -173,18 +175,18 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	
-	int sumUlpDirect = 0;
-	int sumUlpIndirect = 0;
+	int sumUlpExp = 0;
+	int sumUlpExp2 = 0;
 
 	for (int i = 0; i < dataAmount; i++) {
-		int ulpDirect = ULPDiff(exp_data[i], result[i].directExp);
-		int ulpIndirect = ULPDiff(exp_data[i], result[i].indirectExp);
-		sumUlpDirect += ulpDirect;
-		sumUlpIndirect += ulpIndirect;
+		int ulpExp = ULPDiff(expData[i].exp, result[i].exp);
+		int ulpExp2 = ULPDiff(expData[i].exp2, result[i].exp2);
+		sumUlpExp += ulpExp;
+		sumUlpExp2 += ulpExp2;
 	}
 	
-	std::cout << "The sum of ULPs direct is: " << sumUlpDirect << "\n";
-	std::cout << "The sum of ULPs indirect is: " << sumUlpIndirect << "\n";
+	std::cout << "The sum of ULPs in exp function is: " << sumUlpExp << "\n";
+	std::cout << "The sum of ULPs in exp2 function is: " << sumUlpExp2 << "\n";
 
 	return EXIT_SUCCESS;
 }
@@ -262,5 +264,6 @@ HRESULT CreateUnorderedAccessView(ID3D11Device* device, ID3D11Buffer* buffer, ID
 
 int ULPDiff(float a, float b) {
 	FloatCmp ia(a), ib(b);
+	//std::cout << ia.i << " " << ib.i << "\n";
 	return std::abs(ia.i - ib.i);
 }
