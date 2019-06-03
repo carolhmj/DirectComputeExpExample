@@ -10,5 +10,5 @@ RWStructuredBuffer<OutputType> Output;
 void main( uint3 DTid : SV_DispatchThreadID )
 {
 	Output[DTid.x].directExp = exp(Input[DTid.x]);
-	Output[DTid.x].directExp = exp2(Input[DTid.x] * 1.442695040888963);
+	Output[DTid.x].indirectExp = exp2(Input[DTid.x] * 1.442695040888963);
 }
