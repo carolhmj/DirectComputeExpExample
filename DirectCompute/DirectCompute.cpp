@@ -49,17 +49,17 @@ int main(int argc, char* argv[])
 
 	static const D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
 	HRESULT hr;
-	float min, max;
+	//float min, max;
 
-	if (argc < 3) {
-		min = 0.0;
-		max = 1.0;
-	}
-	else {
-		min = std::atof(argv[1]);
-		max = std::atof(argv[2]);
-	}
-	std::cout << "min and max are set to: " << min << " " << max << "\n";
+	//if (argc < 3) {
+	//	min = 0.0;
+	//	max = 1.0;
+	//}
+	//else {
+	//	min = std::atof(argv[1]);
+	//	max = std::atof(argv[2]);
+	//}
+	//std::cout << "min and max are set to: " << min << " " << max << "\n";
 
 	std::cout << "Trying to create device...\n";
 	
@@ -73,7 +73,6 @@ int main(int argc, char* argv[])
 
 	static const D3D_SHADER_MACRO defines[] = { "USE_STRUCTURED_BUFFERS" };
 	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-	//DWORD shaderFlags = 0;
 	ID3DBlob* errorBlob = nullptr;
 	ID3DBlob* codeBlob = nullptr;
 	
@@ -107,24 +106,27 @@ int main(int argc, char* argv[])
 
 	std::cout << "Creating buffers and filling them with input and expected output data...\n";
 
-	float data[100], exp_data[100];
+	//float data[100], exp_data[100];
+	float data[] = {1, 2, 30, 40};
+	float exp_data[] = { 2.7182818284590452353602874713527, 7.3890056098930650227230427460575, 485165195.40979027796910683054154, 235385266837019985.4078991074903};
+	size_t dataAmount = sizeof(data) / sizeof(float);
 
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(min, max);
-	for (int i = 0; i < 100; i++) {
-		data[i] = dis(gen);
-		exp_data[i] = std::exp(data[i]);
-	}
+	//std::random_device rd;
+	//std::mt19937 gen(rd());
+	//std::uniform_real_distribution<> dis(min, max);
+	//for (int i = 0; i < 100; i++) {
+	//	data[i] = dis(gen);
+	//	exp_data[i] = std::exp(data[i]);
+	//}
 
 	std::cout << "Creating buffers for the input and output values...\n";
 
-	hr = CreateBuffer(device, sizeof(float), 100, data, &inBuffer);
+	hr = CreateBuffer(device, sizeof(float), dataAmount, data, &inBuffer);
 	if (FAILED(hr)) {
 		std::cout << "Failed to create input buffer. Error code was: " << std::hex << hr << "\n";
 		return EXIT_FAILURE;
 	}
-	hr = CreateBuffer(device, sizeof(OutputType), 100, nullptr, &outBuffer);
+	hr = CreateBuffer(device, sizeof(OutputType), dataAmount, nullptr, &outBuffer);
 	if (FAILED(hr)) {
 		std::cout << "Failed to create output buffer. Error code was: " << std::hex << hr << "\n";
 		return EXIT_FAILURE;
@@ -148,7 +150,7 @@ int main(int argc, char* argv[])
 	deviceContext->CSSetShader(shader, nullptr, 0);
 	deviceContext->CSSetShaderResources(0, 1, &inSRV);
 	deviceContext->CSSetUnorderedAccessViews(0, 1, &outUAV, nullptr);
-	deviceContext->Dispatch(100, 1, 1);
+	deviceContext->Dispatch(dataAmount, 1, 1);
 
 	if (rdoc_api) rdoc_api->EndFrameCapture(nullptr, nullptr);
 
@@ -176,9 +178,10 @@ int main(int argc, char* argv[])
 	int sumUlpDirect = 0;
 	int sumUlpIndirect = 0;
 
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < dataAmount; i++) {
 		int ulpDirect = ULPDiff(exp_data[i], result[i].directExp);
 		int ulpIndirect = ULPDiff(exp_data[i], result[i].indirectExp);
+		std::cout << "index " << i << " ulp direct " << ulpDirect << " ulpindirect " << ulpIndirect << "\n";
 		sumUlpDirect += ulpDirect;
 		sumUlpIndirect += ulpIndirect;
 	}
