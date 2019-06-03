@@ -34,7 +34,7 @@ HRESULT CreateUnorderedAccessView(ID3D11Device* device, ID3D11Buffer* buffer, ID
 HRESULT CreateStagingBuffer(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Buffer* bufferFrom, ID3D11Buffer** bufferTo);
 int ULPDiff(float a, float b);
 
-int main(int argc, char* argv[])
+int main()
 {
 	ID3D11Device*               device = nullptr;
 	ID3D11DeviceContext*        deviceContext = nullptr;
@@ -49,17 +49,6 @@ int main(int argc, char* argv[])
 
 	static const D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
 	HRESULT hr;
-	float min, max;
-
-	if (argc < 3) {
-		min = 0.0;
-		max = 1.0;
-	}
-	else {
-		min = std::atof(argv[1]);
-		max = std::atof(argv[2]);
-	}
-	std::cout << "min and max are set to: " << min << " " << max << "\n";
 
 	//std::cout << "Trying to create device...\n";
 	
@@ -106,20 +95,9 @@ int main(int argc, char* argv[])
 
 	//std::cout << "Creating buffers and filling them with input and expected output data...\n";
 
-	float data[100]; 
-	OutputType expData[100];
+	float data[] = { 1.25, 2.76, 3.81, 4.99 };
+	OutputType expData[] = { {3.49034295f, 2.37841423f }, {15.79984294f, 6.77396249f}, {45.15043886f, 14.02569154f}, {146.93642349f, 31.77895985f} };
 	size_t dataAmount = sizeof(data) / sizeof(float);
-
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(min, max);
-	for (int i = 0; i < 100; i++) {
-		data[i] = i;
-		expData[i].exp = std::exp(data[i]);
-		expData[i].exp2 = std::exp2(data[i]);
-	}
-
-	//std::cout << "Creating buffers for the input and output values...\n";
 
 	hr = CreateBuffer(device, sizeof(float), dataAmount, data, &inBuffer);
 	if (FAILED(hr)) {
@@ -264,6 +242,6 @@ HRESULT CreateUnorderedAccessView(ID3D11Device* device, ID3D11Buffer* buffer, ID
 
 int ULPDiff(float a, float b) {
 	FloatCmp ia(a), ib(b);
-	//std::cout << ia.i << " " << ib.i << "\n";
+	std::cout << ia.i << " " << ib.i << "\n";
 	return std::abs(ia.i - ib.i);
 }
